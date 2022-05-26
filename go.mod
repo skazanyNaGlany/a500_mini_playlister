@@ -1,4 +1,4 @@
-module github.com/skazanyNaGlany/a500_mini_playlister
+module github.com/skazanyNaGlany/thea500_mini_playlister
 
 go 1.18
 
