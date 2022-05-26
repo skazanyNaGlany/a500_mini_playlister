@@ -1,2 +1,2 @@
-# A500 MINI PLAYLISTER
-A500 MINI playlist creator
+# THEA500 MINI PLAYLISTER
+THEA500 MINI playlist creator

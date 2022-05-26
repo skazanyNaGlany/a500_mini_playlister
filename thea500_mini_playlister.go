@@ -1,6 +1,6 @@
-// A500 MINI PLAYLISTER v0.1
+// THEA500 MINI PLAYLISTER v0.1
 //
-// A500 MINI playlist generator.
+// THEA500 MINI playlist generator.
 //
 //
 // MIT License
@@ -40,7 +40,7 @@ import (
 	"github.com/yargevad/filepathx"
 )
 
-const app_name = "A500 MINI PLAYLISTER"
+const app_name = "THEA500 MINI PLAYLISTER"
 const app_version = "0.1"
 const adf_pattern = "*.adf"
 const m3u_pattern = "*.m3u"
@@ -60,7 +60,7 @@ func printAppName() {
 	log.Println(
 		getFullAppName())
 	log.Println()
-	log.Println("A500 MINI playlist generator.")
+	log.Println("THEA500 MINI playlist generator.")
 	log.Println()
 }
 
