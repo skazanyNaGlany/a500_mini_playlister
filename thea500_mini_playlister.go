@@ -69,10 +69,14 @@ func printAppInfo() {
 	log.Println("M3U playlist files from all ADF files")
 	log.Println("found in current and sub directories.")
 	log.Println()
+	log.Println("Add . as a prefix to the directory name")
+	log.Println("to skip it.")
+	log.Println()
 	log.Println("Just run it and wait for finish.")
 	log.Println()
 	log.Println("This app will delete all your previous")
-	log.Println("M3U files so use with caution.")
+	log.Println("M3U files so use with CAUTION. Set a specific")
+	log.Println("M3U file as read-only so it will not be deleted.")
 	log.Println()
 }
 
