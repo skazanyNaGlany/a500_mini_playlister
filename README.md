@@ -1,2 +1,2 @@
 # THEA500 MINI PLAYLISTER
-THEA500 MINI playlist creator
+THEA500 MINI playlist generator
