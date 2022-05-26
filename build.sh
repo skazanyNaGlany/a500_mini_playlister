@@ -1,3 +1,3 @@
 set GOARCH=386
-go build a500_mini_playlister.go
+go build thea500_mini_playlister.go
 
