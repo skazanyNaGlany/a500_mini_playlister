@@ -163,9 +163,10 @@ func deletePlaylists() {
 }
 
 func fixPaths() {
-	directory = filepath.FromSlash(directory)
+	var err error
 
-	directory, err := filepath.Abs(directory)
+	directory = filepath.FromSlash(directory)
+	directory, err = filepath.Abs(directory)
 
 	if err != nil {
 		log.Fatalln(err)
