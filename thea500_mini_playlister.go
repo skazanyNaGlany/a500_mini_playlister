@@ -45,7 +45,6 @@ const app_version = "0.1"
 const adf_pattern = "*.adf"
 const m3u_pattern = "*.m3u"
 const m3u_extension = "m3u"
-const adf_extension = "adf"
 const str_path_separator = string(os.PathSeparator)
 const str_line_break = "\n"
 
@@ -130,7 +129,7 @@ func processCommandLineArgs() {
 }
 
 func deletePlaylists() {
-	log.Println("Deleting previous", m3u_extension, "files...")
+	log.Println("Deleting previous", m3u_pattern, "files...")
 	log.Println("Searching for", m3u_pattern, "files in", directory, "...")
 
 	m3u_files, err := filepathx.Glob(directory + m3u_pattern)
@@ -341,7 +340,7 @@ func getUniquePathname(pathname string) string {
 }
 
 func createPlaylists() {
-	log.Println("Generating", m3u_extension, "files from", adf_extension, "files...")
+	log.Println("Generating", m3u_pattern, "files from", m3u_pattern, "files...")
 	log.Println("Searching for", adf_pattern, "files in", directory, "...")
 
 	processed_adfs := []string{}
