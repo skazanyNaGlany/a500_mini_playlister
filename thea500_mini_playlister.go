@@ -50,6 +50,7 @@ const str_line_break = "\n"
 
 var re_similar_rom = regexp.MustCompile(`\(Disk\ \d\ of\ \d\)`)
 var directory string = ""
+var keep_existing = false
 
 func getFullAppName() string {
 	return fmt.Sprintf("%v v%v", app_name, app_version)
@@ -91,6 +92,9 @@ func printUsages() {
 	log.Println("\t-d, --directory <directory>")
 	log.Println("\t\t\t use <directory> instead of current app directory")
 	log.Println()
+	log.Println("\t-k, --keep-existing-m3u")
+	log.Println("\t\t\t do not delete existing m3u files")
+	log.Println()
 }
 
 func changeCurrentWorkingDir() {
@@ -124,11 +128,17 @@ func processCommandLineArgs() {
 			i++
 
 			directory = os.Args[i]
+		} else if arg_value == "-k" || arg_value == "--keep-existing-m3u" {
+			keep_existing = true
 		}
 	}
 }
 
 func deletePlaylists() {
+	if keep_existing {
+		return
+	}
+
 	log.Println("Deleting previous", m3u_pattern, "files...")
 	log.Println("Searching for", m3u_pattern, "files in", directory, "...")
 
@@ -220,7 +230,7 @@ func checkDirectoryExists() {
 	}
 }
 
-func findSimilarRoms(rom_path string) ([]string, string) {
+func findSimilarRoms(rom_pathname string) ([]string, string) {
 	// find similar rom files, for example for rom:
 	// e:\projects\a500_mini_playlister\Superfrog (1993)(Team 17)[cr CSL][a](Disk 1 of 4).adf
 	//
@@ -232,24 +242,24 @@ func findSimilarRoms(rom_path string) ([]string, string) {
 	//
 	// clean_filename:
 	// Superfrog (1993)(Team 17)[cr CSL][a]
-	dirname := filepath.Dir(rom_path)
-	basename := filepath.Base(rom_path)
+	dirname := filepath.Dir(rom_pathname)
+	basename := filepath.Base(rom_pathname)
+	similar := []string{rom_pathname}
 
 	match := re_similar_rom.FindAll([]byte(basename), -1)
 
 	if len(match) != 1 {
-		return []string{rom_path}, ""
+		return similar, ""
 	}
 
 	no_disc_filename := string(re_similar_rom.ReplaceAll([]byte(basename), []byte("")))
 	clean_filename, extension := filenameSplitText(no_disc_filename)
 	files, err := filepathx.Glob(dirname + str_path_separator + "*" + extension)
-	similar := []string{}
 
 	clean_filename = strings.TrimSpace(clean_filename)
 
 	if err != nil {
-		return []string{rom_path}, clean_filename
+		return similar, clean_filename
 	}
 
 	sort.Strings(files)
@@ -266,8 +276,6 @@ func findSimilarRoms(rom_path string) ([]string, string) {
 			}
 		}
 	}
-
-	similar = funk.UniqString(similar)
 
 	sort.Strings(similar)
 
@@ -317,29 +325,6 @@ func filesToRelative(root_directory string, files []string) []string {
 	return relative_files
 }
 
-func getUniquePathname(pathname string) string {
-	if !fileExists(pathname) {
-		return pathname
-	}
-
-	dir_n_filename, extension := filenameSplitText(pathname)
-
-	i := 2
-	new_pathname := pathname
-
-	for {
-		new_pathname = dir_n_filename + "(" + fmt.Sprint(i) + ")" + extension
-
-		if !fileExists(new_pathname) {
-			break
-		}
-
-		i++
-	}
-
-	return new_pathname
-}
-
 func createPlaylists() {
 	log.Println("Generating", m3u_pattern, "files from", m3u_pattern, "files...")
 	log.Println("Searching for", adf_pattern, "files in", directory, "...")
@@ -353,61 +338,49 @@ func createPlaylists() {
 
 	sort.Strings(adf_files)
 
-	for _, ifile := range adf_files {
-		ifile_relative, err := filepath.Rel(directory, ifile)
+	for _, ifile_pathname := range adf_files {
+		ifile_relative, err := filepath.Rel(directory, ifile_pathname)
 
 		if err != nil {
 			log.Println(err)
 			continue
 		}
 
-		// skip hidden file
+		// skip file which its name or directory starts from .
+		// so it is hidden
 		if strings.HasPrefix(ifile_relative, ".") {
 			continue
 		}
 
-		if funk.Contains(processed_adfs, ifile) {
+		if funk.Contains(processed_adfs, ifile_pathname) {
 			continue
 		}
 
-		similar, clean_filename := findSimilarRoms(ifile)
-		len_similar := len(similar)
+		similar, clean_filename := findSimilarRoms(ifile_pathname)
 
-		if clean_filename == "" && len_similar > 0 {
-			// rom file does not have (Disk n of n) in his name
+		if clean_filename == "" {
+			// rom file does not have (Disk n of n) in its name
 			// so there will be no clean_filename
-			// use first rom returned in the similar list
+			// use first rom
 			clean_filename, _ = filenameSplitText(similar[0])
 		}
 
-		if clean_filename == "" {
-			// clean_filename is still empty because there is no similar roms
-			// use just first found rom file
-			clean_filename, _ = filenameSplitText(ifile)
-		}
-
-		if len_similar == 0 {
-			// no similar roms found, use first found rom file
-			similar = append(similar, ifile)
-		}
-
 		clean_filename = filepath.Base(clean_filename)
-		clean_filename_m3u := directory + clean_filename + "." + m3u_extension
+		target_pathname_m3u := directory + clean_filename + "." + m3u_extension
 
-		if !canWrite(clean_filename_m3u) {
+		if fileExists(target_pathname_m3u) {
+			log.Println("Skipping existing", target_pathname_m3u)
 			continue
 		}
 
 		processed_adfs = append(processed_adfs, similar...)
 		processed_adfs = funk.UniqString(processed_adfs)
 
-		clean_filename_m3u = getUniquePathname(clean_filename_m3u)
-
 		similar = filesToRelative(directory, similar)
 
-		printM3USimilar(clean_filename_m3u, similar)
+		printM3USimilar(target_pathname_m3u, similar)
 
-		err2 := createPlaylistFromFiles(clean_filename_m3u, similar)
+		err2 := createPlaylistFromFiles(target_pathname_m3u, similar)
 
 		if err2 != nil {
 			log.Println(err2)
